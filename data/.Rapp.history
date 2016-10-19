@@ -1,0 +1,2 @@
+load("/Users/andrea/MWAS/data/metabolic_data.rda")
+load("/Users/andrea/MWAS/data/MWAS_T2D.rda")
