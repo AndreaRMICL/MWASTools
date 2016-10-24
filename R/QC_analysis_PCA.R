@@ -2,12 +2,14 @@
 
 ### QC_PCA ##
 
-QC_PCA = function(metabo_matrix, scale = FALSE, center = TRUE, ...) {
+QC_PCA = function(metabo_SE, scale = FALSE, center = TRUE, ...) {
 
-    ## Check that input data are correct ##
-    if (!is.matrix(metabo_matrix) | !is.numeric(metabo_matrix)) {
-        stop("metabo_matrix needs to be a numeric matrix")
+    ## Check that input data are correct
+    if (class(metabo_SE)[1] != "SummarizedExperiment") {
+        stop("metabo_SE must be a SummarizedExperiment object")
     }
+
+    metabo_matrix = t(assays(metabo_SE)$metabolic_data)
 
     if (any(is.na(metabo_matrix))) {
         stop("QC_PCA cannot deal with NA values in metabo_matrix")
@@ -20,32 +22,20 @@ QC_PCA = function(metabo_matrix, scale = FALSE, center = TRUE, ...) {
 
 ### QC_PCA_scoreplot ##
 
-QC_PCA_scoreplot = function(PCA_model, px = 1, py = 2, sample_ids = NULL,
-                            class = NULL, CI_level = 0.95, pch = 20, xlim = NULL, ylim = NULL,
-                            color_scale = c("cornflowerblue", "red"), grid = TRUE,
-                            ...) {
+QC_PCA_scoreplot = function(PCA_model, metabo_SE, plot_labels = FALSE,
+    px = 1, py = 2, CI_level = 0.95, pch = 20, xlim = NULL, ylim = NULL,
+    color_scale = c("cornflowerblue", "red"), grid = TRUE, ...) {
 
     ## Get scores
     PCA_scores = PCA_model$x
 
-    ## Check that input data are correct ##
-    if (!is.null(sample_ids)) {
-        if (length(sample_ids) != nrow(PCA_scores)) {
-            stop("sample_ids length must be consistent with metabo_matrix dimension")
-        }
+    ## Check that input data are correct
+    if (class(metabo_SE)[1] != "SummarizedExperiment") {
+        stop("metabo_SE must be a SummarizedExperiment object")
     }
 
-    if (!is.null(class)) {
-        if (length(class) != nrow(PCA_scores)) {
-            stop("class length must be consistent with metabo_matrix dimension")
-        }
-        if (!is.vector(class)) {
-            stop("class must be a numeric vector with values 0 or 1")
-        }
-        if (identical(sort(unique(class)), c(0, 1)) == FALSE) {
-            stop("class must be a numeric vector with values 0 or 1")
-        }
-    }
+    sample_ids = colnames(metabo_SE)
+    class = colData(metabo_SE)[, "sample_type"]
 
     if (!is.null(ylim)) {
         if (length(ylim) != 2 | !is.numeric(ylim)) {
@@ -59,8 +49,8 @@ QC_PCA_scoreplot = function(PCA_model, px = 1, py = 2, sample_ids = NULL,
         }
     }
 
-    if(!is.numeric(CI_level)) {
-      stop("CI_level must be a numeric values")
+    if (!is.numeric(CI_level)) {
+        stop("CI_level must be a numeric values")
     }
 
     ## Get variance explained by each PC
@@ -75,20 +65,22 @@ QC_PCA_scoreplot = function(PCA_model, px = 1, py = 2, sample_ids = NULL,
     PC_x = PCA_scores[, px]
     PC_y = PCA_scores[, py]
 
-    ## Get plot limits
-    if (!is.null(class)) { ## remove QC to calculate ellipse
-      index_experimental = which(class == 0)
-      ellipse = dataEllipse(PC_x[index_experimental], PC_y[index_experimental],
-                            levels = c(CI_level), draw = FALSE)
+    ## Get plot limits remove QC to calculate ellipse
+    if (!is.null(class)) {
+        index_experimental = which(class == 0)
+        ellipse = dataEllipse(PC_x[index_experimental], PC_y[index_experimental],
+            levels = c(CI_level), draw = FALSE)
     } else {
-      ellipse = dataEllipse(PC_x, PC_y, levels = c(CI_level), draw = FALSE)
+        ellipse = dataEllipse(PC_x, PC_y, levels = c(CI_level), draw = FALSE)
     }
 
     if (is.null(xlim)) {
-        xlim = c(min(min(PC_x), min(ellipse[, 1])), max(max(PC_x), max(ellipse[, 1])))
+        xlim = c(min(min(PC_x), min(ellipse[, 1])), max(max(PC_x),
+            max(ellipse[, 1])))
     }
     if (is.null(ylim)) {
-        ylim = c(min(min(PC_y), min(ellipse[, 2])), max(max(PC_y), max(ellipse[, 2])))
+        ylim = c(min(min(PC_y), min(ellipse[, 2])), max(max(PC_y),
+            max(ellipse[, 2])))
     }
 
     if (!is.null(class)) {
@@ -101,37 +93,37 @@ QC_PCA_scoreplot = function(PCA_model, px = 1, py = 2, sample_ids = NULL,
 
     xlab = paste(paste("PC", px, "(", sep = ""), paste(variance_px, "%)", sep = ""),
                  sep = "")
-    ylab = paste(paste("PC", py, "(", sep = ""), paste(variance_py, "%)", sep = ""),
-                 sep = "")
+    ylab = paste(paste("PC", py, "(", sep = ""), paste(variance_py,
+        "%)", sep = ""), sep = "")
 
     ## Plot scores
-    if (pch == 21 | pch ==25) {
-      bg = color_vector
-      plot(PC_x, PC_y, pch = pch, bg = color_vector, xlab = xlab,
-           ylab = ylab, xlim = xlim, ylim = ylim, ...)
+    if (pch == 21 | pch == 25) {
+        bg = color_vector
+        plot(PC_x, PC_y, pch = pch, bg = color_vector, xlab = xlab,
+            ylab = ylab, xlim = xlim, ylim = ylim, ...)
     } else {
-      plot(PC_x, PC_y, pch = pch, col = color_vector, xlab = xlab,
-           ylab = ylab, xlim = xlim, ylim = ylim, ...)
+        plot(PC_x, PC_y, pch = pch, col = color_vector, xlab = xlab,
+            ylab = ylab, xlim = xlim, ylim = ylim, ...)
     }
 
-    if (!is.null(class)) { ## remove QC to calculate ellipse
-      index_experimental = which(class == 0)
-      ellipse = dataEllipse(PC_x[index_experimental], PC_y[index_experimental],
-                            levels = c(CI_level), add = TRUE, col = "black",
-                            lwd = 0.6, plot.points = FALSE, center.cex = 0.2,
-                            center.pch = NULL)
+    if (!is.null(class)) {
+        ## remove QC to calculate ellipse
+        index_experimental = which(class == 0)
+        ellipse = dataEllipse(PC_x[index_experimental], PC_y[index_experimental],
+            levels = c(CI_level), add = TRUE, col = "black",
+            lwd = 0.6, plot.points = FALSE, center.cex = 0.2,
+            center.pch = NULL)
     } else {
-      ellipse = dataEllipse(PC_x, PC_y, levels = c(CI_level), add = TRUE, col = "black",
-                            lwd = 0.6, plot.points = FALSE, center.cex = 0.2,
-                            center.pch = NULL)
+        ellipse = dataEllipse(PC_x, PC_y, levels = c(CI_level),
+            add = TRUE, col = "black", lwd = 0.6, plot.points = FALSE,
+            center.cex = 0.2, center.pch = NULL)
     }
 
-    if (!is.null(sample_ids)) {
+    if (plot_labels == TRUE) {
         text(PC_x, PC_y, labels = sample_ids, cex = 0.7)
     }
 
-    if (grid == TRUE){
-        grid(lwd=1.5, col = "gray", lty = 3, equilogs = TRUE)
+    if (grid == TRUE) {
+        grid(lwd = 1.5, col = "gray", lty = 3, equilogs = TRUE)
     }
 }
-

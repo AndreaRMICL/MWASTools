@@ -26,31 +26,45 @@ model_bootstrap <- function(all_var, indices, assoc_method) {
 ## EXTERNAL FUNCTION ##
 
 ### MWAS_bootstrapping ##
-MWAS_bootstrapping = function(metabolite, disease, CF_matrix = NULL,
-                              assoc_method, iterations = 10000) {
+MWAS_bootstrapping = function(metabo_SE, metabolite_id, disease_id,
+    confounder_ids = NULL, assoc_method, iterations = 10000) {
 
     ## Check that input data are correct
-    if ((is.vector(metabolite) & is.vector(disease)) == FALSE) {
-        stop("metabolite and disease must be numeric vectors")
+    if (class(metabo_SE)[1] != "SummarizedExperiment") {
+        stop("metabo_SE must be a SummarizedExperiment object")
     }
-    if (length(metabolite) != length(disease)) {
-        stop("metabolite and disease must have the same length")
+    if ((metabolite_id[1] %in% rownames(metabo_SE)) == FALSE) {
+        # only 1 metabolite_id is valid
+        stop("metabolite_id is not included in metabolic_data")
     }
-    if (!is.null(CF_matrix)) {
-        if (!is.matrix(CF_matrix)) {
-            stop("CF_matrix must be a matrix")
+    ind_metabo = which(rownames(metabo_SE) == metabolite_id[1])
+    metabolite = (assays(metabo_SE)$metabolic_data)[ind_metabo, ]
+
+    clinical_variables = as.matrix(colData(metabo_SE))
+    if ((disease_id[1] %in% colnames(clinical_variables)) ==
+        FALSE) {
+        stop("disease_id is not included in clinical_data")
+    }
+    disease = clinical_variables[, disease_id[1]]  # only 1 disease is valid.
+
+    if (!is.null(confounder_ids)) {
+        if (length(setdiff(confounder_ids, colnames(clinical_variables))) >
+            0) {
+            stop("One or more confounders are not included in clinical_data")
         }
-        if (nrow(CF_matrix) != length(metabolite)) {
-            stop("CF_matrix row number must be consistent with metabolite length")
-        }
+        CF_matrix = clinical_variables[, confounder_ids]
+        CF_matrix = as.matrix(CF_matrix, nrow = nrow(clinical_variables))
+    } else {
+        CF_matrix = NULL
     }
 
     all_var = cbind(metabolite, disease, CF_matrix)
 
     # Check that method is correct
-    possible_methods = c("pearson", "spearman", "logistic", "linear", "kendall")
+    possible_methods = c("pearson", "spearman", "logistic", "linear",
+        "kendall")
     if (length(intersect(assoc_method, possible_methods)) == 0) {
-      stop("Invalid method. Valid methods are: pearson, spearman,kendall, logistic, linear")
+        stop("Invalid method. Valid methods are: pearson, spearman,kendall, logistic, linear")
     }
 
     # Check the number of samples
@@ -67,13 +81,14 @@ MWAS_bootstrapping = function(metabolite, disease, CF_matrix = NULL,
     na_index = unique(as.numeric((which(is.na(all_var), arr.ind = TRUE)[, 1])))
 
     if (length(na_index) > 0) {
-      metabolite = metabolite[-na_index]
-      disease = disease[-na_index]
-      CF_matrix = CF_matrix[-na_index, ]
-      all_var = cbind(metabolite, disease, CF_matrix)
+        metabolite = metabolite[-na_index]
+        disease = disease[-na_index]
+        CF_matrix = CF_matrix[-na_index, ]
+        all_var = cbind(metabolite, disease, CF_matrix)
     }
 
-    # Transform disease variable into a factor (logistic regression)
+    # Transform disease variable into a factor (logistic
+    # regression)
     if (assoc_method == "logistic") {
         disease = as.factor(disease)
 
@@ -87,17 +102,18 @@ MWAS_bootstrapping = function(metabolite, disease, CF_matrix = NULL,
     set.seed(12345)  # ensure results reproducibility
 
     MWAS_boot = boot(data = all_var, model_bootstrap, R = iterations,
-                     sim = "ordinary", assoc_method = assoc_method)
+        sim = "ordinary", assoc_method = assoc_method)
 
     MWAS_bootM = summary(MWAS_boot)
     rownames(MWAS_bootM) = c("estimate")
-    colnames(MWAS_bootM) = c("iterations", "original", "bias", "std.error",
-                             "Median")
+    colnames(MWAS_bootM) = c("iterations", "original", "bias",
+        "std.error", "Median")
 
     ## Calculate CI
-    CI_est = try(boot.ci(MWAS_boot, type = "bca", index = 1)$bca, silent = TRUE)
-    if (grepl("Error",CI_est[1])) {
-      stop ("Couldn't calculate 95% CI: try with a higher number of iterations")
+    CI_est = try(boot.ci(MWAS_boot, type = "bca", index = 1)$bca,
+        silent = TRUE)
+    if (grepl("Error", CI_est[1])) {
+        stop("Couldn't calculate 95% CI: try with a higher number of iterations")
     }
     CI_est_interval = paste(CI_est[4], CI_est[5], sep = ", ")
 

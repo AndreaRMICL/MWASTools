@@ -28,13 +28,15 @@ An NMR spectra plot.
 }
 \examples{
 ## Load data
-data(metabolic_data)
+data(metabo_SE)
 
-## Define ppm variable
-ppm <- as.numeric(colnames(metabolic_data))
+## Define metabolic_matrix and ppm
+library(SummarizedExperiment)
+metabo_matrix <- t(assays(metabo_SE)$metabolic_data)
+ppm <- as.numeric(colnames(metabo_matrix))
 
 ## Plot first 2 spectra
-plot_spectraNMR (metabolic_data[1:2,], ppm)
-plot_spectraNMR (metabolic_data[1:2,], ppm, xlim = c(1.03, 0.8), main = "NMR spectra")
+plot_spectraNMR (metabo_matrix[1:2,], ppm)
+plot_spectraNMR (metabo_matrix[1:2,], ppm, xlim = c(1.03, 0.8), main = "NMR spectra")
 }
 

@@ -7,7 +7,7 @@ function is designed to visualize MWAS results in the case of discrete metabolic
 variables (e.g. target GC/MS metabolites).
 }
 \usage{
-MWAS_barplot(MWAS_matrix, metabo_ids = NULL, alpha_th = 0.05, width = NULL,
+MWAS_barplot(MWAS_matrix, alpha_th = 0.05, width = NULL,
              scale_color = c("darkgray", "cornflowerblue", "firebrick1"),
              legend_labs =c("unchanged","downregulated","upregulated"),
              ylab = "sign*log(pFDR)", size_yaxis = 12, size_ylab = 12,
@@ -15,7 +15,6 @@ MWAS_barplot(MWAS_matrix, metabo_ids = NULL, alpha_th = 0.05, width = NULL,
 }
 \arguments{
   \item{MWAS_matrix}{numeric matrix resulting from the function "MWAS_stats()".}
-  \item{metabo_ids}{optional character vector containing the metabolite ids.}
   \item{alpha_th}{numeric value indicating the significance threshold.}
   \item{width}{numeric value indicating bar width.}
   \item{scale_color}{character vector corresponding to the 3-color scale that
@@ -39,20 +38,15 @@ A bar plot.
 }
 \examples{
 ## Load data
-data(target_metabolites)
-data(clinical_data)
-
-## Define variables for MWAS
-diabetes <- clinical_data[, 3]
-metabolites <- colnames(target_metabolites)
+data(targetMetabo_SE)
 
 ## Test for association between diabetes and target_metabolites
-T2D_model <- MWAS_stats (target_metabolites, diabetes, assoc_method = "logistic",
-                         metabo_ids = metabolites)
+T2D_model <- MWAS_stats (targetMetabo_SE, disease_id = "T2D",
+                         assoc_method = "logistic")
 
 ## Bar plot
-MWAS_barplot(T2D_model, metabo_ids = metabolites)
-MWAS_barplot(T2D_model, metabo_ids = metabolites, width = 0.7) # change bar width
-MWAS_barplot(T2D_model, metabo_ids = metabolites, width = 0.7, angle_names = 90)
+MWAS_barplot(T2D_model)
+MWAS_barplot(T2D_model, width = 0.7) # change bar width
+MWAS_barplot(T2D_model, width = 0.7, angle_names = 90)
 }
 

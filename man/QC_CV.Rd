@@ -4,18 +4,17 @@
 \description{
 This function calculates the coefficient of variation (CV) ( |sd/mean| ) of each
 metabolic feature across the quality control (QC) samples. The CV distribution is
-represented in a histogram. This function can be used to assess the reproducibility of individual metabolic features. Notice that CV = 0.30 and CV = 0.15 are the thresholds established by the FDA guidelines for biomarker discovery and quantification, respectively.
+represented in a histogram. This function can be used to assess the reproducibility
+of individual metabolic features. Notice that CV = 0.30 and CV = 0.15 are the thresholds
+established by the FDA guidelines for biomarker discovery and quantification, respectively.
 }
 \usage{
-QC_CV (QCmetabo_matrix, metabo_ids = NULL, CV_th = 0.30, plot_hist = TRUE,
-       hist_bw = 0.005, hist_col = "moccasin", size_lab = 12, size_axis = 12)
+QC_CV (metabo_SE, CV_th = 0.30, plot_hist = TRUE, hist_bw = 0.005,
+       hist_col = "moccasin", size_lab = 12, size_axis = 12)
 }
 \arguments{
-  \item{QCmetabo_matrix}{numeric matrix containing the metabolic data (e.g. NMR
-  peak intensities or metabolite concentrations) of the QC samples. The columns of
-  the matrix must correspond to the metabolic variables and the rows to the samples.}
-  \item{metabo_ids}{optional character vector containing the ids of the metabolic
-  variables.}
+  \item{metabo_SE}{SummarizedExperiment object generated using the function
+  "MWAS_SummarizedExperiment()".}
   \item{CV_th}{numeric value indicating the CV threshold.}
   \item{plot_hist}{logical constant indicating whether a histogram showing CV
   distribution will be plotted.}
@@ -36,16 +35,10 @@ Analytical Chemistry, 78, 2199-1208.
 }
 \examples{
 ## Load data
-data(metabolic_data)
-
-## Select subset of QC samples
-QC_data <- metabolic_data[507:516, ]
-
-## Define ppm variable
-ppm <- colnames(QC_data)
+data(metabo_SE)
 
 ## Calculate CVs
-metabo_CV <-  QC_CV (QC_data, metabo_ids = ppm)
-metabo_CV2 <-  QC_CV (QC_data, metabo_ids = ppm, hist_bw = 0.008, hist_col = "lightblue")
+metabo_CV <-  QC_CV (metabo_SE)
+metabo_CV2 <-  QC_CV (metabo_SE, hist_bw = 0.008, hist_col = "lightblue")
 }
 

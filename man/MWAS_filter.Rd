@@ -25,13 +25,16 @@ MWAS_matrix.
 }
 \examples{
 ## Load data
-data(target_metabolites)
-data(clinical_data)
+data(targetMetabo_SE)
 
 ## Test for association between diabetes and target_metabolites
-T2D_model <- MWAS_stats (target_metabolites, disease = clinical_data[,3],
-                        assoc_method = "logistic", metabo_ids = colnames(target_metabolites))
+T2D_model <- MWAS_stats (targetMetabo_SE, disease_id = "T2D",
+                         assoc_method = "logistic")
 
 ## Filter T2D_model by p-value
 pvalue_filter <- MWAS_filter(T2D_model, type = "pvalue", alpha_th = 0.001)
+
+## Subset targetMetabo_SE based on pvalue_filter
+index_features <- pvalue_filter[, 4]
+targetMetabo_SE[index_features, ]
 }

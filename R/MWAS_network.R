@@ -29,7 +29,7 @@ match_igAttribute = function(metabolite, attributes_met, alpha_th) {
     score_th = -log10(alpha_th)
     ind_metabolite = which(attributes_met[, 1] == metabolite)
     att = as.numeric(attributes_met[ind_metabolite, 2])
-    if(att < (-score_th)) {
+    if (att < (-score_th)) {
         col = "cornflowerblue"
     } else if (att > score_th) {
         col = "firebrick1"
@@ -51,14 +51,15 @@ remove_isolatedV = function(metabolite, all_metabolites) {
 
 ##### MWAS_network ###
 
-MWAS_network = function(metabo_matrix, MWAS_matrix, metabo_ids = NULL,
-                        alpha_th = 0.05, cor_th = 0.25, file_name = "MWAS",
-                        res_cor = 2) {
+MWAS_network = function(metabo_SE, MWAS_matrix, alpha_th = 0.05,
+    cor_th = 0.25, file_name = "MWAS", res_cor = 2) {
 
-    ## Check that the input data are correct
-    if (!is.matrix(metabo_matrix)) {
-        stop("metabo_matrix must be a numeric matrix")
+    ## Check that input data are correct
+    if (class(metabo_SE)[1] != "SummarizedExperiment") {
+        stop("metabo_SE must be a SummarizedExperiment object")
     }
+    metabo_matrix = t(assays(metabo_SE)$metabolic_data)
+
     if (!is.matrix(MWAS_matrix)) {
         stop("MWAS_matrix must be a numeric matrix")
     }
@@ -68,20 +69,14 @@ MWAS_network = function(metabo_matrix, MWAS_matrix, metabo_ids = NULL,
     if (nrow(MWAS_matrix) != ncol(metabo_matrix)) {
         stop("dimension of metabo_matrix and MWAS_matrix must be consistent")
     }
-    if (is.null(metabo_ids)) {
-        metabo_ids = paste("M", 1:nrow(MWAS_matrix), sep = "")
-    } else {
-        if(length(metabo_ids) != nrow(MWAS_matrix)) {
-            stop ("metabo_ids length must be consistent with MWAS_matrix row number")
-        }
-    }
+    metabo_ids = colnames(metabo_matrix)
     num_answer = suppressWarnings(!is.na(as.numeric(metabo_ids[1])))
 
     if (num_answer == TRUE) {
         metabo_ids = paste("m", metabo_ids, sep = "")
     }
-    if(length(metabo_ids) != length(unique(metabo_ids))) {
-        stop ("metabo_ids must be unique")
+    if (length(metabo_ids) != length(unique(metabo_ids))) {
+        stop("metabo_ids must be unique")
     }
 
     ## Select submatrix of metabolites based on p-value th
@@ -100,9 +95,9 @@ MWAS_network = function(metabo_matrix, MWAS_matrix, metabo_ids = NULL,
 
     ## Build igraph network
     CorMat_W = CorMat
-    CorMat_W[ abs(CorMat_W) <= cor_th] = 0
-    CorMat_W[ row(CorMat_W) == col(CorMat_W) ] = 0
-    igNet = graph.adjacency(CorMat_W, mode = "undirected", weighted=TRUE)
+    CorMat_W[abs(CorMat_W) <= cor_th] = 0
+    CorMat_W[row(CorMat_W) == col(CorMat_W)] = 0
+    igNet = graph.adjacency(CorMat_W, mode = "undirected", weighted = TRUE)
 
     ## Build cytoscape network
     metabolites = colnames(CorMat)[-ncol(CorMat)]
@@ -120,8 +115,9 @@ MWAS_network = function(metabo_matrix, MWAS_matrix, metabo_ids = NULL,
         stop("Impossible to build a network with the current cor_th")
     } else {
         cor_network = cor_network[index_net, ]
-        cor_network = matrix(cor_network, ncol = 4) # force it to be a matrix
-        colnames(cor_network) = c("node1", "node2", "r.coeff", "type")
+        cor_network = matrix(cor_network, ncol = 4)  # force it to be a matrix
+        colnames(cor_network) = c("node1", "node2", "r.coeff",
+            "type")
         rownames(cor_network) = NULL
     }
 
@@ -136,13 +132,13 @@ MWAS_network = function(metabo_matrix, MWAS_matrix, metabo_ids = NULL,
     isolated_V = names(which(V_type == "isolated"))
 
     ## Remove isolated nodes
-    if(length(isolated_V) > 0) {
+    if (length(isolated_V) > 0) {
         igNet = delete_vertices(igNet, isolated_V)
     }
 
     all_metabolitesi = rownames(as.matrix(unlist(V(igNet))))
-    attributes_meti = lapply(all_metabolitesi, match_igAttribute, attributes_met,
-                             alpha_th = alpha_th)
+    attributes_meti = lapply(all_metabolitesi, match_igAttribute,
+        attributes_met, alpha_th = alpha_th)
     attributes_meti = do.call(rbind, attributes_meti)
     attributes_col = as.character(attributes_meti[, 2])
     attributes_score = as.numeric(attributes_meti[, 1])
@@ -161,3 +157,4 @@ MWAS_network = function(metabo_matrix, MWAS_matrix, metabo_ids = NULL,
 
     return(igNet)
 }
+

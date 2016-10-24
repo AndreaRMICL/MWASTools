@@ -163,8 +163,8 @@ MWAS_skylineNMR = function(ppm, MWAS_matrix, metabo_vector, alpha_th = 0.05,
 
 
 ### MWAS_barplot ####
-MWAS_barplot = function(MWAS_matrix, metabo_ids = NULL, alpha_th = 0.05, width = NULL,
-                        scale_color = c("darkgray", "cornflowerblue", "firebrick1"),
+MWAS_barplot = function(MWAS_matrix, alpha_th = 0.05, width = NULL, scale_color
+                        = c("darkgray", "cornflowerblue", "firebrick1"),
                         legend_labs = c("unchanged", "downregulated", "upregulated"),
                         ylab = "sign*log(pFDR)", size_yaxis = 12, size_ylab = 12,
                         size_names = 10, angle_names = 45, sort = TRUE) {
@@ -183,9 +183,7 @@ MWAS_barplot = function(MWAS_matrix, metabo_ids = NULL, alpha_th = 0.05, width =
     estimates = as.numeric(MWAS_matrix[,1])
     pvalues = as.numeric(MWAS_matrix[,3])
 
-    if (is.null(metabo_ids)) {
-        metabo_ids = paste("metabo", 1:length(pvalues), sep = "")
-    }
+    metabo_ids = rownames(MWAS_matrix)
 
     if (length(pvalues) != length(metabo_ids)) {
         stop("metabo_ids length must be consistent with MWAS_matrix dimension")

@@ -44,14 +44,16 @@ Nicholson JK, et al. (2005). Method for the identification of molecules and biom
 }
 \examples{
 ## Load data
-data(metabolic_data)
+data(metabo_SE)
 
-## Define ppm variable and ppm_query
-ppm <- as.numeric(colnames(metabolic_data))
-ppm_query <- 1.04 # valine signal
+\donttest{## Define metabolic_matrix, ppm
+library(SummarizedExperiment)
+metabo_matrix <- t(assays(metabo_SE)$metabolic_data)
+ppm <- as.numeric(colnames(metabo_matrix))
 
-## STOCSY
-STOCSY_NMR (metabolic_data, ppm, ppm_query)
-STOCSY_NMR (metabolic_data, ppm, ppm_query, alpha_th = 0, xlim = c(1.06, 1))
+## STOCSY using 1.04 as driver signal
+STOCSY_NMR (metabo_matrix, ppm, ppm_query = 1.04)
+STOCSY_NMR (metabo_matrix, ppm, ppm_query = 1.04, alpha_th = 0, xlim = c(1.06, 1))
+}
 }
 

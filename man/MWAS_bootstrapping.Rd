@@ -7,18 +7,18 @@ testing for association between a given metabolite and a disease phenotype,
 and calculates the confidence intervals of model coefficients.
 }
 \usage{
-MWAS_bootstrapping (metabolite, disease, CF_matrix = NULL, assoc_method,
-                    iterations = 10000)
+MWAS_bootstrapping (metabo_SE, metabolite_id, disease_id, confounder_ids = NULL,
+                    assoc_method, iterations = 10000)
 }
 \arguments{
-  \item{metabolite}{numeric vector corresponding to the levels (e.g. concentration,
-  peak intensity) of the metabolite of interest.}
-  \item{disease}{numeric vector corresponding to the response to be modeled.
-  For logistic regression, disease must be a two-value (e.g. 0,1) numeric vector.
-  NA values are allowed.}
-  \item{CF_matrix}{optional numeric matrix corresponding to the covariates to be
-  included in the model ((e.g. age or gender)). The columns of the matrix must correspond
-  to the covariates and the rows to the samples. NA values are allowed.}
+  \item{metabo_SE}{SummarizedExperiment object generated using the function
+  "MWAS_SummarizedExperiment()".}
+  \item{metabolite_id}{character vector corresponding to the id of the metabolite
+  to be modeled.}
+  \item{disease_id}{character vector corresponding to the id of the response
+  to be modeled.}
+  \item{confounder_ids}{optional character vector corresponding to the ids of
+  covariates to be included in the model (e.g. age or gender).}
   \item{assoc_method}{character constant indicating the association method that
   will be used. Possible values for assoc_method are: "pearson" (pearson correlation),
   "spearman" (spearman correlation), "kendall" (kendall correlation), "linear"
@@ -37,14 +37,10 @@ University Press.
 }
 \examples{
 ## Load data
-data(target_metabolites)
-data(clinical_data)
+data(targetMetabo_SE)
 
-## Define variables
-OHbutyrate <- target_metabolites[, 2]
-diabetes <- clinical_data[, 3]
-
-## Bootstrapping
-MWAS_bootstrapping (OHbutyrate, diabetes, assoc_method = "logistic", iterations = 1000)
+## Bootstrap model testing for association between diabetes (T2D) and 3OH-butyrate
+MWAS_bootstrapping (targetMetabo_SE, metabolite_id = "3OH-butyrate", disease_id = "T2D",
+                    assoc_method = "logistic", iterations = 1000)
 }
 

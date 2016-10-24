@@ -2,7 +2,7 @@
 
 ### assoc_test ####
 assoc_test = function(metabolite, disease, CF = NULL, method,
-                      output_AT = "pr_values") {
+    output_AT = "pr_values") {
 
     cor_methods = c("pearson", "spearman", "kendall")
 
@@ -52,56 +52,58 @@ assoc_test = function(metabolite, disease, CF = NULL, method,
 MT_correction = function(pvalues, mt_method = mt_method) {
     if (mt_method == "qvalues") {
         bh_pvalues = p.adjust(pvalues, method = "BH")
-        Q = try (qvalue(pvalues), silent = TRUE)
+        Q = try(qvalue(pvalues), silent = TRUE)
         if (grepl("Error", Q[1]) == TRUE) {
-          stop ("Could not calculate q-values. Chose another correction method")
+            stop("Could not calculate q-values. Chose another correction method")
         }
         hist(pvalues, prob = TRUE, col = "gray", xlab = "p-values",
             main = "p-values distribution")
         null_FP = try(head(Q, 2)$pi0, silent = TRUE)
         adjusted_pvalues = bh_pvalues * null_FP
         if (grepl("Error", adjusted_pvalues[1]) == TRUE) {
-          stop ("Could not calculate q-values. Chose another correction method")
+            stop("Could not calculate q-values. Chose another correction method")
         } else {
-          adjusted_pvalues = bh_pvalues * null_FP
+            adjusted_pvalues = bh_pvalues * null_FP
         }
     } else {
         adjusted_pvalues = p.adjust(pvalues, method = mt_method)
     }
-  return(adjusted_pvalues)
+    return(adjusted_pvalues)
 }
 
 
 ## EXTERNAL FUNCTIONS ##
 
 ### MWAS_assoc ####
-MWAS_stats = function(metabo_matrix, disease, CF_matrix = NULL,
-                      assoc_method, mt_method = "BH", output = "pvalues",
-                      metabo_ids = NULL, CV_metabo = NULL) {
+MWAS_stats = function(metabo_SE, disease_id, confounder_ids = NULL,
+    assoc_method, mt_method = "BH", output = "pvalues", CV_metabo = NULL) {
 
     ## Check that input data are correct
-    if (!is.matrix(metabo_matrix) | !is.numeric(metabo_matrix)) {
-        to_print = paste("metabo_matrix needs to be a numeric matrix. If it is a vector",
-            "formalize it as a 1-column matrix")
-        stop(to_print)
+    if (class(metabo_SE)[1] != "SummarizedExperiment") {
+        stop("metabo_SE must be a SummarizedExperiment object")
     }
-    if (!is.vector(disease)) {
-        stop("disease needs to be a numeric vector. If it is a factor, formalize it as vector")
+    metabo_matrix = t(assays(metabo_SE)$metabolic_data)
+    metabo_ids = colnames(metabo_matrix)
+    clinical_variables = as.matrix(colData(metabo_SE))
+
+    if ((disease_id[1] %in% colnames(clinical_variables)) ==
+        FALSE) {
+        stop("disease_id is not included in clinical_data")
+    }
+
+    disease = clinical_variables[, disease_id[1]]  # only 1 disease is valid.
+
+    if (!is.null(confounder_ids)) {
+        if (length(setdiff(confounder_ids, colnames(clinical_variables))) >
+            0) {
+            stop("One or more confounders are not included in clinical_data")
+        }
+        CF_matrix = clinical_variables[, confounder_ids]
+        CF_matrix = as.matrix(CF_matrix, nrow = nrow(clinical_variables))
     } else {
-      if (length(disease) != nrow(metabo_matrix)) {
-        stop ("disease length must be consistent with metabo_matrix dimension")
-      }
+        CF_matrix = NULL
     }
-    if (!is.null(CF_matrix)) {
-        if (!is.matrix(CF_matrix)) {
-            to_print = paste("CF_matrix must be a numeric matrix. If it is a vector",
-                "formalize it as a 1-column matrix")
-            stop(to_print)
-        }
-        if (nrow(CF_matrix) != nrow(metabo_matrix)) {
-          stop ("CF_matrix and metabo_matrix dimensions must be consistent")
-        }
-    }
+
     if (!is.null(CV_metabo)) {
         if (length(CV_metabo) != ncol(metabo_matrix)) {
             stop("CV_metabo length must be consistent with metabo_matrix dimension")
@@ -111,15 +113,16 @@ MWAS_stats = function(metabo_matrix, disease, CF_matrix = NULL,
     all_var = cbind(metabo_matrix, disease, CF_matrix)
 
     ## Check that method is correct
-    possible_methods = c("pearson", "spearman", "logistic", "linear", "kendall")
+    possible_methods = c("pearson", "spearman", "logistic", "linear",
+        "kendall")
     if (length(intersect(assoc_method, possible_methods)) == 0) {
-      stop("Invalid method. Valid methods are: pearson, spearman, kendall, logistic, linear")
+        stop("Invalid method. Valid methods are: pearson, spearman, kendall, logistic, linear")
     }
 
     ## Check that output is correct
     possible_outputs = c("models", "pvalues")
     if (length(intersect(output, possible_outputs)) == 0) {
-      stop("Invalid method. Valid methods are: models,pvalues")
+        stop("Invalid method. Valid methods are: models,pvalues")
     }
 
     ## Check the number of samples
@@ -133,7 +136,8 @@ MWAS_stats = function(metabo_matrix, disease, CF_matrix = NULL,
     }
 
     ## Get NA index
-    na_index = unique(as.numeric((which(is.na(all_var), arr.ind = TRUE)[, 1])))
+    na_index = unique(as.numeric((which(is.na(all_var), arr.ind = TRUE)[,
+        1])))
 
     if (length(na_index) > 0) {
         metabo_matrix = metabo_matrix[-c(na_index), ]
@@ -141,29 +145,22 @@ MWAS_stats = function(metabo_matrix, disease, CF_matrix = NULL,
         CF_matrix = CF_matrix[-c(na_index), ]
     }
 
-    ## Force metabo_matrix and CF_matrix to matrix (in case they are vectors)
+    ## Force metabo_matrix and CF_matrix to matrix (in case they
+    ## are vectors)
     metabo_matrix = matrix(metabo_matrix, nrow = length(disease))
 
     if (!is.null(CF_matrix)) {
         CF_matrix = matrix(CF_matrix, nrow = length(disease))
     }
 
-    ## Add metabo_names
-    if (is.null(metabo_ids)) {
-        metabo_ids = paste("metabo", 1:ncol(metabo_matrix), sep = "")
-    } else {
-        if (length(metabo_ids) != ncol(metabo_matrix)) {
-            stop("metabo_ids length needs to be consistent with metabo_matrix dimension")
-        }
-    }
-
-    ## Transform disease variable into a factor (logistic regression)
+    ## Transform disease variable into a factor (logistic
+    ## regression)
     if (assoc_method == "logistic") {
         disease = as.factor(disease)
 
         if (length(levels(disease)) != 2) {
-            to_print = paste("It is not possible to perform logistic regression",
-                "with the current disease argument")
+            to_print = paste("Disease must be a binary numeric variable to perform",
+                "logistic regression")
             stop(to_print)
         }
     }
@@ -173,17 +170,19 @@ MWAS_stats = function(metabo_matrix, disease, CF_matrix = NULL,
     ## Run MWAS
     if (output == "models") {
         assoc_results = try(lapply(cols_metabo, assoc_test, disease = disease,
-            CF = CF_matrix, method = assoc_method, output_AT = "model"), silent = TRUE)
-        if(grepl("Error", assoc_results[1])) {
-          stop ("Association testing failed for at least one metabolic variable")
+            CF = CF_matrix, method = assoc_method, output_AT = "model"),
+            silent = TRUE)
+        if (grepl("Error", assoc_results[1])) {
+            stop("Association testing failed for at least one metabolic variable")
         }
         return(assoc_results)
     } else {
         assoc_results = try(lapply(cols_metabo, assoc_test, disease = disease,
-            CF = CF_matrix, method = assoc_method, output_AT = "pr_values"), silent = TRUE)
+            CF = CF_matrix, method = assoc_method, output_AT = "pr_values"),
+            silent = TRUE)
 
-        if(grepl("Error", assoc_results[1])) {
-          stop ("Association testing failed for at least one metabolic variable")
+        if (grepl("Error", assoc_results[1])) {
+            stop("Association testing failed for at least one metabolic variable")
         }
 
         assoc_matrix = do.call(rbind, assoc_results)
@@ -194,13 +193,14 @@ MWAS_stats = function(metabo_matrix, disease, CF_matrix = NULL,
         assoc_matrix_adjusted = cbind(assoc_matrix, mt_adjusted_pvalues)
 
         if (is.null(CV_metabo)) {
-            colnames(assoc_matrix_adjusted) = c("estimates", "pvalues",
-                                                "adjusted_pvalues")
+            colnames(assoc_matrix_adjusted) = c("estimates",
+                "pvalues", "adjusted_pvalues")
             return(assoc_matrix_adjusted)
         } else {
-            assoc_matrix_adjusted = cbind(assoc_matrix_adjusted, CV_metabo)
-            colnames(assoc_matrix_adjusted) = c("estimates", "pvalues",
-                                                "adjusted_pvalues", "CV")
+            assoc_matrix_adjusted = cbind(assoc_matrix_adjusted,
+                CV_metabo)
+            colnames(assoc_matrix_adjusted) = c("estimates",
+                "pvalues", "adjusted_pvalues", "CV")
             return(assoc_matrix_adjusted)
         }
     }
@@ -208,7 +208,8 @@ MWAS_stats = function(metabo_matrix, disease, CF_matrix = NULL,
 
 ### MWAS_filter ####
 
-MWAS_filter = function(MWAS_matrix, type = "pvalue", alpha_th = 0.05, CV_th = 0.3) {
+MWAS_filter = function(MWAS_matrix, type = "pvalue", alpha_th = 0.05,
+                       CV_th = 0.3) {
 
     ## Check that input data are correct
     if (!is.matrix(MWAS_matrix) | !is.numeric(MWAS_matrix)) {

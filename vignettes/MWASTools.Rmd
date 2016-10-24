@@ -6,7 +6,7 @@ output:
   BiocStyle::html_document
 vignette: |
   %\VignetteEngine{knitr::rmarkdown} 
-  %\VignetteIndexEntry{MetaboSignal} 
+  %\VignetteIndexEntry{MWASTools} 
   \usepackage[utf8]{inputenc}
 ---
 
@@ -55,43 +55,41 @@ MWAS pipeline with the following key functionalities: quality control (QC) analy
 
 ## Load data
 
-<p style="font-size:110%"> First we loaded the "MWASTools" package: </p>
+<p style="font-size:110%"> First we loaded the "MWASTools" package and the "SummarizedExperiment" package: </p>
 
 ```{r tidy = TRUE}
 library(MWASTools)
+library(SummarizedExperiment)
 ```
 
-<p style="font-size:110%"> We then loaded the datasets required to perform the analysis: </p>
+<p style="font-size:110%"> We then loaded the dataset required to perform the analysis: </p>
 
 ```{r tidy = TRUE}
-data("metabolic_data")
-data("clinical_data")
+data("metabo_SE")
+metabo_SE
 ```
 
-<p style="font-size:110%"> These datasets contain the following information:<br> 
+<p style="font-size:110%"> metabo_SE is a SummarizedExperiment object, containing 
+the following information:<br> 
   - *metabolic_data*: matrix containing the <sup>1</sup>H NMR profiles (δ 1.60 -
-  0.80) of the experimental samples (n = 506) and the QC samples (n=10). <br>
-  - *clinical_data*: matrix of clinical variables (age, gender, type
-  II diabetes and BMI).
+  0.80) of the experimental samples (n = 506) and the QC samples (n = 10). <br>
+  - *clinical_data*: matrix containing clinical data (age, gender, type
+  II diabetes and BMI) and sample type information (i.e. experimental or QC sample).
   <br><br> </p>
 
 ## Quality control (QC) analysis
 
 <p style="font-size:110%"> To ensure the stability and reproducibility of the analytical run, we performed QC analysis based on principal component analysis (PCA) and coefficient of variation (CV) (sd/mean) across the QC samples [@dumas2006]. </p>
 
-```{r tidy = TRUE}
-# Define sample_type variable
-sample_type = c(rep(0, 506), rep(1,10))
-```
 ```{r tidy = TRUE, results='asis'}
 # PCA model
-PCA_model = QC_PCA (metabolic_data, scale = FALSE, center = TRUE)
+PCA_model = QC_PCA (metabo_SE, scale = FALSE, center = TRUE)
 ```
 ```{r tidy = TRUE, eval = FALSE}
 # Plot PCA scores (PC1 vs PC2 & PC3 vs PC4)
 par(mfrow=c(1,2))
-QC_PCA_scoreplot (PCA_model, class = sample_type, main = "PC1 vs PC2")
-QC_PCA_scoreplot (PCA_model, class = sample_type, px=3, py=4, main="PC3 vs PC4")
+QC_PCA_scoreplot (PCA_model, metabo_SE, main = "PC1 vs PC2")
+QC_PCA_scoreplot (PCA_model, metabo_SE, px=3, py=4, main="PC3 vs PC4")
 ```
 
  <img src="PCA_scores.png" alt="Smiley face" align="middle" >
@@ -102,18 +100,17 @@ reproducibility of the analytical run. </p>
 <p style="font-size:110%"> Following QC analysis *via* PCA, we calculated the CVs of the NMR signals across the QC samples. Notice that CV = 0.30 and CV = 0.15 are the thresholds established by the FDA (U.S. Food and Drug Administration) for biomarker discovery and quantification, respectively. </p>
 
 ```{r tidy = TRUE, results='asis'}
-# Select subset of QC samples
-QC_data = metabolic_data[507:516, ]
-
-# Define chemical shift (ppm) scale 
-ppm = as.numeric(colnames(QC_data))
+# Define needed variables
+metabo_matrix <- t(assays(metabo_SE)$metabolic_data)
+ppm <- as.numeric(colnames(metabo_matrix))
+ref_spectrum <- metabo_matrix[507, ]
 ```
 ```{r tidy = TRUE, eval = FALSE}
 # CV calculation 
-metabo_CV = QC_CV (QC_data, metabo_ids = ppm, plot_hist = FALSE)
+metabo_CV = QC_CV (metabo_SE, plot_hist = FALSE)
 
 # NMR spectrum colored according to CVs
-QC_CV_specNMR(QC_data[1,], ppm, metabo_CV)
+QC_CV_specNMR(ref_spectrum, ppm, metabo_CV)
 ```
 
  <img src="CV_spectrum.png" alt="Smiley face" align="middle" >
@@ -125,26 +122,15 @@ QC_CV_specNMR(QC_data[1,], ppm, metabo_CV)
 
 <p style="font-size:110%"> In order to identify metabolites associated with obesity, we run partial Spearman correlations between BMI and each NMR variable, adjusted for age, gender, and type II diabetes. To correct the p-values for multiple-testing we used Benjamini-Hochberg (BH) correction. </p>
 
-```{r tidy = TRUE, results='asis'}
-# Define response variable (BMI)
-BMI = clinical_data[,4]
-
-# Define matrix of confounders
-CF_matrix = clinical_data [,-4]
-```
 ```{r tidy = TRUE, tidy.opts=list(indent = 4, width.cutoff = 80)}
 # Run MWAS
-MWAS_BMI = MWAS_stats(metabolic_data, BMI, CF_matrix, assoc_method = "spearman",
-                      mt_method = "BH", metabo_ids = ppm)
+MWAS_BMI = MWAS_stats(metabo_SE, disease_id = "BMI", confounder_ids = c("Age","Gender", "T2D"), 
+                      assoc_method = "spearman", mt_method = "BH")
 ```
 
 <p style="font-size:110%"> *MWAS_BMI* is 3-column matrix, with the metabolic features (ppm values) in the rows. The columns contain the following information: estimates (i.e. r coefficients), raw p-values and BH-corrected p-values (pFDR). These results were visualized using the function "MWAS_skylineNMR( )". </p>
 
 
-```{r tidy = TRUE, results='asis'}
-# Define reference spectrum
-ref_spectrum = QC_data[1,]
-```
 ```{r tidy = TRUE, eval = FALSE}
 # Visualize MWAS results 
 MWAS_skylineNMR(ppm, MWAS_BMI, metabo_vector = ref_spectrum)
@@ -158,7 +144,7 @@ MWAS_skylineNMR(ppm, MWAS_BMI, metabo_vector = ref_spectrum)
 <p style="font-size:110%"> Finally, we used STOCSY to assign the unknown NMR signals associated with BMI. An illustrative example using δ 1.04 as driver signal is shown below. </p>
 
 ```{r tidy = TRUE, eval = FALSE}
-STOCSY_NMR(metabolic_data, ppm, ppm_query = 1.04)
+STOCSY_NMR(metabo_matrix, ppm, ppm_query = 1.04)
 ```
 
  <img src="STOCSY.png" alt="Smiley face" align="middle" >

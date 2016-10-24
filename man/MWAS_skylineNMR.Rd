@@ -70,19 +70,21 @@ Translational Medicine, 7, 285ra62.
 }
 \examples{
 ## Load data
-data(metabolic_data)
-data(clinical_data)
+data(metabo_SE)
 
-## Define variables
-ppm <- as.numeric(colnames(metabolic_data))
-ref_spectrum <- metabolic_data[507, ]
+\donttest{## Define variables
+library(SummarizedExperiment)
+metabo_matrix <- t(assays(metabo_SE)$metabolic_data)
+ppm <- as.numeric(colnames(metabo_matrix))
+ref_spectrum <- metabo_matrix[507, ]
 
 ## Test for association between BMI and metabolic_data
-BMI_model = MWAS_stats (metabolic_data, disease = clinical_data[,4],
-                        assoc_method = "spearman", metabo_ids = colnames(metabolic_data))
+BMI_model <- MWAS_stats (metabo_SE, disease_id = "BMI", assoc_method = "spearman",
+                         output = "pvalues")
 
 ## Create skyline plots
 MWAS_skylineNMR (ppm, BMI_model, metabo_vector = ref_spectrum)
 MWAS_skylineNMR (ppm, BMI_model, metabo_vector = ref_spectrum, pch = "*", marker_size = 3)
+}
 }
 

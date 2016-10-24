@@ -42,20 +42,20 @@ Analytical Chemistry, 78, 2199-1208.
 }
 \examples{
 ## Load data
-data(metabolic_data)
+data(metabo_SE)
 
-## Select subset of QC samples
-QC_data <- metabolic_data[507:516, ]
-
-## Define variables
-ppm <- as.numeric(colnames(QC_data))
-ref_spectrum <- QC_data[1, ]
+\donttest{## Define variables
+library(SummarizedExperiment)
+metabo_matrix <- t(assays(metabo_SE)$metabolic_data)
+ppm <- as.numeric(colnames(metabo_matrix))
+ref_spectrum <- metabo_matrix[507, ]
 
 ## Calculate CVs
-CV_metabo <-  QC_CV (QC_data, metabo_ids = ppm)
+CV_metabo <-  QC_CV (metabo_SE)
 
 ## Plot NMR spectrum colored by CV
 QC_CV_specNMR (ref_spectrum, ppm, CV_metabo)
 QC_CV_specNMR (ref_spectrum, ppm, CV_metabo, CV_th = 0.15)
+}
 }
 
