@@ -67,7 +67,7 @@ MWAS_network = function(metabo_SE, MWAS_matrix, alpha_th = 0.05,
         stop("MWAS_matrix seems not to have the correct format")
     }
     if (nrow(MWAS_matrix) != ncol(metabo_matrix)) {
-        stop("dimension of metabo_matrix and MWAS_matrix must be consistent")
+        stop("metabo_SE and MWAS_matrix are not consistent")
     }
     metabo_ids = colnames(metabo_matrix)
     num_answer = suppressWarnings(!is.na(as.numeric(metabo_ids[1])))

@@ -4,18 +4,18 @@
 \description{
 This function calculates STOCSY between an NMR signal of interest and all the NMR
 variables, representing a useful tool for NMR molecular identification and assignment.
-The results are represented in a pseudo-NMR spectrum displaying the covariance (height) and the Pearson correlation coefficient (color) of all spectral variables with the variable of interest (driver signal).
+The results are represented in a pseudo-NMR spectrum displaying the covariance (height)
+and the Pearson correlation coefficient (color) of all spectral variables with the variable
+of interest (driver signal).
 }
 \usage{
-STOCSY_NMR (metabo_matrix, ppm, ppm_query, alpha_th = 0.05, xlab = "ppm",
-            ylab = "covariance", size_lab = 12, size_axis = 12, xlim = NULL, ylim = NULL,
-            xbreaks = waiver(), xnames = waiver(), ynames = waiver(), ybreaks = waiver())
+STOCSY_NMR (metabo_SE, ppm_query, alpha_th = 0.05, xlab = "ppm", ylab = "covariance",
+            size_lab = 12, size_axis = 12, xlim = NULL, ylim = NULL, xbreaks = waiver(),
+            xnames = waiver(), ynames = waiver(), ybreaks = waiver())
 }
 \arguments{
-  \item{metabo_matrix}{numeric matrix containing the metabolic data (e.g. NMR peak
-  intensities or metabolite concentrations). The columns of the matrix must correspond
-  to the metabolic variables and the rows to the samples.}
-  \item{ppm}{numeric vector defining the chemical shift scale.}
+  \item{metabo_SE}{SummarizedExperiment object generated using the function
+  "MWAS_SummarizedExperiment()".}
   \item{ppm_query}{numeric value (at least 2 decimals) corresponding to the driver ppm.}
   \item{alpha_th}{numeric value indicating the significance threshold. NMR variables
   with BH-adjusted p-value above this threshold will be neglected.}
@@ -38,22 +38,19 @@ A plot displaying the Pearson correlation coefficient (color) and covariance (he
 between all spectral variables and the driver signal.
 }
 \references{
-Cloarec O, et al.(2005). Statistical total correlation spectroscopy: An exploratory approach for latent biomarker identification from metabolic 1H NMR data sets. Analytical Chemistry, 77, 1282–1289.
+Cloarec O, et al.(2005). Statistical total correlation spectroscopy: An exploratory
+approach for latent biomarker identification from metabolic 1H NMR data sets. Analytical
+Chemistry, 77, 1282–1289.
 
-Nicholson JK, et al. (2005). Method for the identification of molecules and biomarkers using chemical, biochemical and biological data. US 20070043518 A1
+Nicholson JK, et al. (2005). Method for the identification of molecules and biomarkers
+using chemical, biochemical and biological data. US 20070043518 A1
 }
 \examples{
 ## Load data
 data(metabo_SE)
 
-\donttest{## Define metabolic_matrix, ppm
-library(SummarizedExperiment)
-metabo_matrix <- t(assays(metabo_SE)$metabolic_data)
-ppm <- as.numeric(colnames(metabo_matrix))
-
 ## STOCSY using 1.04 as driver signal
-STOCSY_NMR (metabo_matrix, ppm, ppm_query = 1.04)
-STOCSY_NMR (metabo_matrix, ppm, ppm_query = 1.04, alpha_th = 0, xlim = c(1.06, 1))
-}
+STOCSY_NMR (metabo_SE, ppm_query = 1.04)
+STOCSY_NMR (metabo_SE, ppm_query = 1.04, alpha_th = 0, xlim = c(1.06, 1))
 }
 

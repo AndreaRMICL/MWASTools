@@ -40,7 +40,7 @@ sig_color = function(score, alpha_th = alpha_th) {
 ## EXTERNAL FUNCTIONS ##
 
 ### MWAS_skylineNMR ####
-MWAS_skylineNMR = function(ppm, MWAS_matrix, metabo_vector, alpha_th = 0.05,
+MWAS_skylineNMR = function(metabo_SE, MWAS_matrix, ref_sample, alpha_th = 0.05,
                            output = "all", xlab = "ppm", ylab1 = "sign*log(pFDR)",
                            ylab2 = "intensity", pch = 20, marker_size = 1,
                            scale_color = c("black", "cornflowerblue", "red"),
@@ -50,30 +50,42 @@ MWAS_skylineNMR = function(ppm, MWAS_matrix, metabo_vector, alpha_th = 0.05,
                            ynames1 = waiver(), ynames2 = waiver()) {
 
     ## Check that the input data are correct
+    if (class(metabo_SE)[1] != "SummarizedExperiment") {
+        stop("metabo_SE must be a SummarizedExperiment object")
+    }
+    metabo_matrix = t(assays(metabo_SE)$metabolic_data)
+    ppm = rownames(metabo_SE)
+    if (suppressWarnings(is.na(as.numeric(ppm[1])))) {
+        stop("metabo_SE rownames seem not to correspond to a ppm scale")
+    } else {
+        ppm = as.numeric(ppm)
+    }
+    if (ref_sample %in% colnames(metabo_SE) == FALSE) {
+        stop ("ref_sample is not included in metabo_SE colnames")
+    } else {
+        metabo_vector = metabo_matrix[ref_sample, ]
+    }
+
     if (!is.matrix (MWAS_matrix) | !is.numeric(MWAS_matrix)) {
-      stop ("MWAS_matrix must be a numeric matrix. Check MWAS_stats()")
+        stop ("MWAS_matrix must be a numeric matrix. Check MWAS_stats()")
     }
     if (ncol(MWAS_matrix) < 3 ) {
-      stop ("MWAS_matrix does not seem to have the right format. Check MWAS_stats")
+        stop ("MWAS_matrix does not seem to have the right format. Check MWAS_stats")
     }
-    if ((is.vector(ppm) & is.vector(metabo_vector)) == FALSE) {
-        stop("metabo_vector and ppm must be numeric vectors")
-    }
+
     if (sum(is.na(MWAS_matrix))) {
         stop ("NA values in MWAS_matrix are not allowed")
     }
     estimates = MWAS_matrix[,1]
     pvalues = MWAS_matrix[,3]
 
-    if (length(pvalues) != length(ppm) | length(pvalues) != length(metabo_vector)) {
-        stop("ppm and metabo_vector lengths must be consistent with MWAS_matrix dimension")
+    if (length(pvalues) != length(ppm)) {
+        stop("metabo_SE and MWAS_matrix are not consistent")
     }
-    if (!is.numeric(ppm)) {
-        stop ("ppm must be a numeric vector")
-    }
-    if (!is.numeric(metabo_vector)) {
-      stop ("metabo_vector must be a numeric vector")
-    }
+
+    ## Sort xlim in decreasing order (ppm is plotted in inverse scale)
+    xlim = suppressWarnings(sort(xlim, decreasing = TRUE))
+
     if (length(scale_color) != 3) {
         stop("scale_color must have 3 color values")
     }

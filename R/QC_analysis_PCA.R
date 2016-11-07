@@ -65,12 +65,13 @@ QC_PCA_scoreplot = function(PCA_model, metabo_SE, plot_labels = FALSE,
     PC_x = PCA_scores[, px]
     PC_y = PCA_scores[, py]
 
-    ## Get plot limits remove QC to calculate ellipse
-    if (!is.null(class)) {
+    ## Get plot limits
+    if ( 0 %in% class) {  ## Remove QC to calculate ellipse
         index_experimental = which(class == 0)
+
         ellipse = dataEllipse(PC_x[index_experimental], PC_y[index_experimental],
-            levels = c(CI_level), draw = FALSE)
-    } else {
+                              levels = c(CI_level), draw = FALSE)
+    } else { # e.g. do PCA of QC samples
         ellipse = dataEllipse(PC_x, PC_y, levels = c(CI_level), draw = FALSE)
     }
 
@@ -83,40 +84,36 @@ QC_PCA_scoreplot = function(PCA_model, metabo_SE, plot_labels = FALSE,
             max(ellipse[, 2])))
     }
 
-    if (!is.null(class)) {
-        color_vector = as.character(class)
-        color_vector[color_vector == 0] = color_scale[1]
-        color_vector[color_vector == 1] = color_scale[2]
-    } else {
-        color_vector = color_scale[1]
-    }
+    color_vector = as.character(class)
+    color_vector[color_vector == 0] = color_scale[1]
+    color_vector[color_vector == 1] = color_scale[2]
 
     xlab = paste(paste("PC", px, "(", sep = ""), paste(variance_px, "%)", sep = ""),
                  sep = "")
-    ylab = paste(paste("PC", py, "(", sep = ""), paste(variance_py,
-        "%)", sep = ""), sep = "")
+    ylab = paste(paste("PC", py, "(", sep = ""), paste(variance_py, "%)", sep = ""),
+                 sep = "")
 
     ## Plot scores
     if (pch == 21 | pch == 25) {
         bg = color_vector
-        plot(PC_x, PC_y, pch = pch, bg = color_vector, xlab = xlab,
-            ylab = ylab, xlim = xlim, ylim = ylim, ...)
+        plot(PC_x, PC_y, pch = pch, bg = color_vector, xlab = xlab, ylab = ylab,
+             xlim = xlim, ylim = ylim, ...)
     } else {
-        plot(PC_x, PC_y, pch = pch, col = color_vector, xlab = xlab,
-            ylab = ylab, xlim = xlim, ylim = ylim, ...)
+        plot(PC_x, PC_y, pch = pch, col = color_vector, xlab = xlab, ylab = ylab,
+             xlim = xlim, ylim = ylim, ...)
     }
 
-    if (!is.null(class)) {
-        ## remove QC to calculate ellipse
-        index_experimental = which(class == 0)
-        ellipse = dataEllipse(PC_x[index_experimental], PC_y[index_experimental],
-            levels = c(CI_level), add = TRUE, col = "black",
-            lwd = 0.6, plot.points = FALSE, center.cex = 0.2,
-            center.pch = NULL)
-    } else {
-        ellipse = dataEllipse(PC_x, PC_y, levels = c(CI_level),
-            add = TRUE, col = "black", lwd = 0.6, plot.points = FALSE,
-            center.cex = 0.2, center.pch = NULL)
+    ## remove QC to calculate ellipse
+    if ( 0 %in% class) {
+      index_experimental = which(class == 0)
+      ellipse = dataEllipse(PC_x[index_experimental], PC_y[index_experimental],
+                            levels = c(CI_level), add = TRUE, col = "black",
+                            lwd = 0.6, plot.points = FALSE, center.cex = 0.2,
+                            center.pch = NULL)
+    } else { # e.g. do PCA of QC samples
+      ellipse = dataEllipse(PC_x, PC_y, levels = c(CI_level), add = TRUE, col = "black",
+                            lwd = 0.6, plot.points = FALSE, center.cex = 0.2,
+                            center.pch = NULL)
     }
 
     if (plot_labels == TRUE) {

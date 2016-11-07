@@ -6,14 +6,12 @@ This function generates an NMR spectra plot, with the chemical shifts displayed
 along the x-axis, and the peak intensities displayed on the y-axis.
 }
 \usage{
-plot_spectraNMR (metabo_matrix, ppm, type = "l", lty = 1, xlab ="ppm",
+plot_spectraNMR (metabo_SE, type = "l", lty = 1, xlab ="ppm",
                  ylab ="intensity", xlim = NULL, ...)
 }
 \arguments{
-  \item{metabo_matrix}{numeric matrix containing the metabolic data (e.g. NMR peak
-  intensities or metabolite concentrations). The columns of the matrix must correspond
-  to the metabolic variables and the rows to the samples.}
-  \item{ppm}{numeric vector defining the chemical shift scale.}
+  \item{metabo_SE}{SummarizedExperiment object generated using the function
+  "MWAS_SummarizedExperiment()".}
   \item{type}{character vector indicating the type of plot for each row of metabo_matrix.
   For all possible types, see "plot()".}
   \item{lty}{character vector of line types. For all possible types, see "plot()".}
@@ -30,13 +28,8 @@ An NMR spectra plot.
 ## Load data
 data(metabo_SE)
 
-## Define metabolic_matrix and ppm
-library(SummarizedExperiment)
-metabo_matrix <- t(assays(metabo_SE)$metabolic_data)
-ppm <- as.numeric(colnames(metabo_matrix))
-
 ## Plot first 2 spectra
-plot_spectraNMR (metabo_matrix[1:2,], ppm)
-plot_spectraNMR (metabo_matrix[1:2,], ppm, xlim = c(1.03, 0.8), main = "NMR spectra")
+plot_spectraNMR (metabo_SE[, 1:2])
+plot_spectraNMR (metabo_SE[, 1:2], xlim = c(1.03, 0.8), main = "NMR spectra")
 }
 

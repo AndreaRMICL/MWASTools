@@ -10,7 +10,7 @@ displayed on the y-axis. The lower panel shows an NMR spectrum colored according
 MWAS results.
 }
 \usage{
-MWAS_skylineNMR (ppm, MWAS_matrix, metabo_vector, alpha_th = 0.05, output = "all",
+MWAS_skylineNMR (metabo_SE, MWAS_matrix, ref_sample, alpha_th = 0.05, output = "all",
                  xlab ="ppm", ylab1 = "sign*log(pFDR)", ylab2 = "intensity", pch = 20,
                  marker_size = 1, scale_color = c("black", "cornflowerblue", "red"),
                  size_lab = 12, size_axis = 12, xlim = NULL, ylim1 = NULL,
@@ -19,10 +19,11 @@ MWAS_skylineNMR (ppm, MWAS_matrix, metabo_vector, alpha_th = 0.05, output = "all
                  ynames1 = waiver(), ynames2 = waiver())
 }
 \arguments{
-  \item{ppm}{numeric vector defining the chemical shift scale.}
+  \item{metabo_SE}{SummarizedExperiment object generated using the function
+  "MWAS_SummarizedExperiment()".}
   \item{MWAS_matrix}{numeric matrix resulting from the function "MWAS_stats()".}
-  \item{metabo_vector}{numeric vector containing the intensities of the reference
-  spectrum.}
+  \item{ref_sample}{character vector indicating the id of the sample that will
+  be used to plot the NMR spectrum.}
   \item{alpha_th}{numeric value indicating the significance threshold.}
   \item{output}{character constant indicating the outcome of the function ("skyline",
   "spectrum" or "all"). If outcome = "all", both the skyline and the spectrum with be plotted
@@ -72,19 +73,13 @@ Translational Medicine, 7, 285ra62.
 ## Load data
 data(metabo_SE)
 
-\donttest{## Define variables
-library(SummarizedExperiment)
-metabo_matrix <- t(assays(metabo_SE)$metabolic_data)
-ppm <- as.numeric(colnames(metabo_matrix))
-ref_spectrum <- metabo_matrix[507, ]
-
 ## Test for association between BMI and metabolic_data
 BMI_model <- MWAS_stats (metabo_SE, disease_id = "BMI", assoc_method = "spearman",
                          output = "pvalues")
 
 ## Create skyline plots
-MWAS_skylineNMR (ppm, BMI_model, metabo_vector = ref_spectrum)
-MWAS_skylineNMR (ppm, BMI_model, metabo_vector = ref_spectrum, pch = "*", marker_size = 3)
+MWAS_skylineNMR (metabo_SE, BMI_model, ref_sample = "QC1")
+MWAS_skylineNMR (metabo_SE, BMI_model, ref_sample = "QC1", pch = "*", marker_size = 3)
 }
-}
+
 

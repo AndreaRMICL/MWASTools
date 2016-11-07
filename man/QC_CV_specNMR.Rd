@@ -6,16 +6,16 @@ This function allows plotting a reference NMR spectrum colored based on the coef
 of variation (CV) of each NMR signal. See function "QC_CV()".
 }
 \usage{
-QC_CV_specNMR (metabo_vector, ppm, CV_metabo, CV_th = 0.30, xlab = "ppm",
+QC_CV_specNMR (metabo_SE, ref_sample,  CV_th = 0.30, xlab = "ppm",
                ylab = "intensity", size_axis = 12, size_lab = 12, xlim = NULL,
                ylim = NULL, xbreaks = waiver (), xnames = waiver (),
                ybreaks = waiver (), ynames = waiver ())
 }
 \arguments{
-  \item{metabo_vector}{numeric vector containing the intensities of the reference
-  spectrum.}
-  \item{ppm}{numeric vector defining the chemical shift scale.}
-  \item{CV_metabo}{numeric vector of CVs. See function "QC_CV()".}
+  \item{metabo_SE}{SummarizedExperiment object generated using the function
+  "MWAS_SummarizedExperiment()".}
+  \item{ref_sample}{character vector indicating the id of the sample that will
+  be used to plot the NMR spectrum.}
   \item{CV_th}{numeric value indicating the CV threshold. NMR signals with CV equal or
   above CV_th will be colored in red.}
   \item{xlab}{character vector specifying a title for the x-axis.}
@@ -44,18 +44,10 @@ Analytical Chemistry, 78, 2199-1208.
 ## Load data
 data(metabo_SE)
 
-\donttest{## Define variables
-library(SummarizedExperiment)
-metabo_matrix <- t(assays(metabo_SE)$metabolic_data)
-ppm <- as.numeric(colnames(metabo_matrix))
-ref_spectrum <- metabo_matrix[507, ]
-
-## Calculate CVs
-CV_metabo <-  QC_CV (metabo_SE)
-
 ## Plot NMR spectrum colored by CV
-QC_CV_specNMR (ref_spectrum, ppm, CV_metabo)
-QC_CV_specNMR (ref_spectrum, ppm, CV_metabo, CV_th = 0.15)
+QC_CV_specNMR (metabo_SE, ref_sample = "QC1", CV_th = 0.30)
+QC_CV_specNMR (metabo_SE, ref_sample = "QC1", CV_th = 0.15)
+
 }
-}
+
 

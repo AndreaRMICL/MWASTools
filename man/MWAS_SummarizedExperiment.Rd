@@ -12,7 +12,8 @@ MWAS_SummarizedExperiment(metabo_matrix, clinical_matrix, sample_type)
   \item{metabo_matrix}{numeric matrix containing the metabolic data (e.g. NMR peak
   intensities or metabolite concentrations). The columns of the matrix must correspond
   to the metabolic variables and the rows to the samples. Column and row names must
-  contain the metabolite ids and the sample ids, respectively.}
+  contain the metabolite ids (e.g. chemical shifts for NMR data) and the sample ids,
+  respectively.}
   \item{clinical_matrix}{numeric matrix containing the clinical data (e.g. age, gender).
   The columns of the matrix must correspond to the phenotypic variables and the
   rows to the samples. Column and row names must contain the phenotype ids and
@@ -21,7 +22,7 @@ MWAS_SummarizedExperiment(metabo_matrix, clinical_matrix, sample_type)
   \item{sample_type}{numeric vector indicating sample type (i.e. experimental sample
   or QC sample). The vector must be coded as follows: experimental sample = 0,
   QC sample = 1. If QC samples are not available, all the elements of this vector
-  must be 1.}
+  must be 0.}
 }
 \value{
 A SummarizedExperiment object.

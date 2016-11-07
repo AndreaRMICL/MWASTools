@@ -26,8 +26,7 @@ QC_CV = function(metabo_SE, CV_th = 0.3, plot_hist = TRUE, hist_bw = 0.005,
         stop("metabo_SE does not contain QC samples (coded as sample_type = 1)")
     }
 
-    QCmetabo_matrix = assays(metabo_SE[, metabo_SE$sample_type ==
-        1])$metabolic_data
+    QCmetabo_matrix = assays(metabo_SE[, metabo_SE$sample_type == 1])$metabolic_data
     metabo_ids = rownames(QCmetabo_matrix)
 
     cols_metabo = split(QCmetabo_matrix, row(QCmetabo_matrix))
@@ -69,38 +68,57 @@ QC_CV = function(metabo_SE, CV_th = 0.3, plot_hist = TRUE, hist_bw = 0.005,
 
 ## QC_CV_specNMR ##
 
-QC_CV_specNMR = function(metabo_vector, ppm, CV_metabo, CV_th = 0.3,
+QC_CV_specNMR = function(metabo_SE, ref_sample, CV_th = 0.3,
     xlab = "ppm", ylab = "intensity", size_axis = 12, size_lab = 12,
     xlim = NULL, ylim = NULL, xbreaks = waiver(), xnames = waiver(),
     ybreaks = waiver(), ynames = waiver()) {
 
-    ## Check that input data are correct
-    if ((is.vector(CV_metabo) & is.vector(ppm) & is.vector(metabo_vector)) ==
-        FALSE) {
-        stop("Arguments: CV_metabo, metabo_vector and ppm, must be numeric vectors")
+    ## Check that the input data are correct
+    if (class(metabo_SE)[1] != "SummarizedExperiment") {
+        stop("metabo_SE must be a SummarizedExperiment object")
     }
-    if (length(CV_metabo) != length(ppm) | length(CV_metabo) !=
-        length(metabo_vector)) {
-        stop("Arguments: CV_metabo, metabo_vector and ppm, must have the same length")
+
+    ppm = rownames(metabo_SE)
+    if (suppressWarnings(is.na(as.numeric(ppm[1])))) {
+        stop("metabo_SE rownames seem not to correspond to a ppm scale")
+    } else {
+        ppm = as.numeric(ppm)
     }
-    if (!is.numeric(ppm)) {
-        stop("ppm must be a numeric vector")
+
+    ## Sort xlim in decreasing order (ppm is plotted in inverse scale)
+    xlim = suppressWarnings(sort(xlim, decreasing = TRUE))
+
+    if(!is.null(xlim)) {
+        ind1 = which(ppm >= xlim[1]) [1]
+        ind2 = which(ppm >= xlim[2])[1]
+        if (is.na(ind1) | is.na(ind2)) {
+            stop("xlim is not contained in metabo_SE rownames")
+        }
+        ind_range = sort(ind1:ind2)
+        metabo_SE = metabo_SE[ind_range, ]
+        ppm = ppm[ind_range]
     }
+
+    metabo_matrix = t(assays(metabo_SE)$metabolic_data)
+    if (ref_sample %in% colnames(metabo_SE) == FALSE) {
+        stop ("ref_sample is not included in metabo_SE colnames")
+    } else {
+        metabo_vector = metabo_matrix[ref_sample, ]
+    }
+
+    ## Calculate CV_metabo
+    CV_metabo = QC_CV (metabo_SE, CV_th = CV_th, plot_hist = FALSE)
 
     ## Create a NMR spectrum colored by CV
-
     abs.CV = CV_metabo
     abs.CV[abs.CV >= CV_th] = CV_th
 
-    data_CV = data.frame(ppm = ppm, metabo_vector = metabo_vector,
-        abs.CV = abs.CV, CV_raw = CV_metabo)
+    data_CV = data.frame(ppm = ppm, metabo_vector = metabo_vector, abs.CV = abs.CV,
+                         CV_raw = CV_metabo)
     # color_scale = c('dodgerblue2', 'green3', 'gold',
     # 'darkorange2','orangered2', 'red1')
-    color_scale = c("green3", "dodgerblue2", "plum2", "purple",
-        "purple4", "red1")
+    color_scale = c("green3", "dodgerblue2", "plum2", "purple", "purple4", "red1")
     col_values = c(0, 0.45, 0.55, 0.9, 0.9996666, 1)
-
-    # options(warn = -1)
 
     figure_spectrum = ggplot(data_CV, aes(ppm, metabo_vector,
         color = abs.CV)) + geom_line() + scale_colour_gradientn(colours = color_scale,
@@ -113,8 +131,6 @@ QC_CV_specNMR = function(metabo_vector, ppm, CV_metabo, CV_th = 0.3,
         axis.title = element_text(size = size_lab, vjust = 0))
 
     plot(figure_spectrum)
-
-    # options(warn = 0)
 
     return(figure_spectrum)
 }
