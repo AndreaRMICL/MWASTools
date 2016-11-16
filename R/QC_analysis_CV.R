@@ -5,8 +5,7 @@ CV_calculation = function(vector) {
 }
 
 CV_features = function(vector, CV_th) {
-    features_15 = round(sum(vector < 0.5 * CV_th)/length(vector),
-        2)
+    features_15 = round(sum(vector < 0.5 * CV_th)/length(vector), 2)
     features_30 = round(sum(vector < CV_th)/length(vector), 2)
     all_features = c(features_15, features_30)
     return(all_features)
@@ -38,32 +37,35 @@ QC_CV = function(metabo_SE, CV_th = 0.3, plot_hist = TRUE, hist_bw = 0.005,
     features_CV_metabo = CV_features(CV_metabo, CV_th = CV_th)
 
     if (is.na(features_CV_metabo[1])) {
-        stop("CV calculation failed: please check QCmetabo_matrix")
+        warning("CV calculation failed for at least some features")
+        return(CV_metabo)
+    } else {
+        message("CV summary:")
+        to_print = paste("   % metabolite features with CV <", 0.5 *
+                        CV_th, ":", 100 * features_CV_metabo[1], sep = " ")
+        message(to_print)
+        to_print = paste("   % metabolite features with CV <", CV_th,
+                         ":", 100 * features_CV_metabo[2], sep = " ")
+        message(to_print, "\n")
+
+        ## Set max CV = 1
+        CV_metabo_backup = CV_metabo
+
+        if (plot_hist == TRUE) {
+            CV_metabo[CV_metabo > 1] = 1
+            figure = ggplot(as.data.frame(CV_metabo), aes(CV_metabo)) +
+              geom_histogram(fill = hist_col[1], binwidth = hist_bw,
+                             colour = "black") +
+              theme_bw() + labs(x = "CV", y = "count") +
+              theme(panel.grid.major = element_blank(), panel.grid.minor =
+                      element_blank(), axis.text = element_text(size = size_axis),
+                    axis.title = element_text(size = size_lab), axis.title.y =
+                      element_text(vjust = 0), axis.title.x = element_text(vjust = 0))
+            plot(figure)
+      }
+        return(CV_metabo_backup)
     }
 
-    message("CV summary:")
-    to_print = paste("   % metabolite features with CV <", 0.5 *
-        CV_th, ":", 100 * features_CV_metabo[1], sep = " ")
-    message(to_print)
-    to_print = paste("   % metabolite features with CV <", CV_th,
-        ":", 100 * features_CV_metabo[2], sep = " ")
-    message(to_print, "\n")
-
-    ## Set max CV = 1
-    CV_metabo_backup = CV_metabo
-
-    if (plot_hist == TRUE) {
-        CV_metabo[CV_metabo > 1] = 1
-        figure = ggplot(as.data.frame(CV_metabo), aes(CV_metabo)) +
-            geom_histogram(fill = hist_col[1], binwidth = hist_bw,
-                colour = "black") + theme_bw() + labs(x = "CV",
-            y = "count") + theme(panel.grid.major = element_blank(),
-            panel.grid.minor = element_blank(), axis.text = element_text(size = size_axis),
-            axis.title = element_text(size = size_lab), axis.title.y = element_text(vjust = 0),
-            axis.title.x = element_text(vjust = 0))
-        plot(figure)
-    }
-    return(CV_metabo_backup)
 }
 
 ## QC_CV_specNMR ##
@@ -145,6 +147,9 @@ CV_filter = function(metabo_SE, CV_metabo, CV_th = 0.3) {
 
     if (!is.vector(CV_metabo)) {
         stop("CV_metabo needs to be a numeric")
+    }
+    if (sum(is.na(CV_metabo)) > 0) {
+        stop ("Cannot perform CV filtering with NA values in CV_metabo")
     }
 
     if (nrow(metabo_SE) != length(CV_metabo)) {

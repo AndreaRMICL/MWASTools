@@ -9,12 +9,14 @@ QC_PCA = function(metabo_SE, scale = FALSE, center = TRUE, ...) {
         stop("metabo_SE must be a SummarizedExperiment object")
     }
 
-    metabo_matrix = t(assays(metabo_SE)$metabolic_data)
+    metabo_matrix = assays(metabo_SE)$metabolic_data
 
     if (any(is.na(metabo_matrix))) {
-        stop("QC_PCA cannot deal with NA values in metabo_matrix")
+        warning("metabolic variables with NA values were removed")
+        metabo_matrix = na.omit(metabo_matrix)
     }
 
+    metabo_matrix = t(metabo_matrix)
     model = prcomp(metabo_matrix, scale = scale, center = center, ...)
 
     return(model)

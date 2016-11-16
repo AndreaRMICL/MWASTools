@@ -112,18 +112,25 @@ reproducibility of the analytical run. </p>
 <p style="font-size:110%"> Following QC analysis *via* PCA, we calculated the CVs of the NMR signals across the QC samples. Notice that CV = 0.30 and CV = 0.15 are the thresholds established by the FDA (U.S. Food and Drug Administration) for biomarker discovery and quantification, respectively. </p>
 
 
-```{r tidy = TRUE, eval = FALSE}
+```{r tidy = TRUE, eval = TRUE}
 # CV calculation 
 metabo_CV = QC_CV (metabo_SE, plot_hist = FALSE)
-
+```
+```{r tidy = TRUE, eval = FALSE}
 # NMR spectrum colored according to CVs
 QC_CV_specNMR(metabo_SE, ref_sample = "QC1")
 ```
 
  <img src="CV_spectrum.png" alt="Smiley face" align="middle" >
 
-<p style="font-size:110%"> The results from CV analysis show that most metabolic features exhibit low CV values (99 % with CV < 0.30 and 92 % with CV < 0.15), further confirming the reproducibility of the dataset. 
-<br><br> </p>
+<p style="font-size:110%"> The results from CV analysis show that most metabolic features 
+exhibit low CV values (99 % with CV < 0.30 and 92 % with CV < 0.15), further confirming the reproducibility of the dataset. The metabolic matrix was then CV-filtered to remove 
+non-reproducible features: </p>
+
+```{r tidy = TRUE}
+# Filter metabolic-matrix based on a CV cut-off of 0.30
+metabo_SE = CV_filter(metabo_SE, metabo_CV, CV_th = 0.30)
+```
 
 ## Metabolome-wide associations
 
@@ -144,7 +151,6 @@ MWAS_skylineNMR(metabo_SE, MWAS_BMI, ref_sample = "QC1")
 ```
 
  <img src="MWAS_skyline.png" alt="Smiley face" align="middle" >
- <img src="MWAS_spectrum.png" alt="Smiley face" align="middle" >
 <br>
 
 ## NMR metabolite assignment using STOCSY
