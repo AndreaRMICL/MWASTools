@@ -2,10 +2,10 @@ MWAS_SummarizedExperiment = function(metabo_matrix, clinical_matrix,
     sample_type) {
 
     ## Check that input data are correct
-    if (!is.matrix(metabo_matrix)) {
+    if (!is.matrix(metabo_matrix) | !is.numeric(metabo_matrix) ) {
         stop("metabo_matrix must be a numeric matrix")
     }
-    if (!is.matrix(clinical_matrix)) {
+    if (!is.matrix(clinical_matrix) | !is.numeric(clinical_matrix)) {
         stop("clinical_matrix must be a numeric matrix")
     }
     if (nrow(metabo_matrix) != nrow(clinical_matrix)) {

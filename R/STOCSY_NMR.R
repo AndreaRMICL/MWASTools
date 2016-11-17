@@ -37,7 +37,7 @@ STOCSY_NMR = function(metabo_SE, ppm_query, alpha_th = 0.05,
 
     ppm_query = ppm_query[1]  # in case the user enters more than 1 value
     if (identical(ppm_query, round(ppm_query, 1))) {
-        stop("ppm must have at least two decimals")
+        stop("ppm_query must have at least two decimals")
     }
 
     ppm_index = grep(ppm_query, ppm, fixed = TRUE)[1]
