@@ -18,8 +18,8 @@ plot_spectraNMR = function(metabo_SE, type = "l", lty = 1,
     if (is.null(xlim)) {
         xlim = rev(range(ppm))
     } else {
-        ind1 = grep(xlim[2], ppm, fixed = TRUE)[1]
-        ind2 = grep(xlim[1], ppm, fixed = TRUE)[1]
+        ind1 = which(ppm >= xlim[2])[1]
+        ind2 = which(ppm >= xlim[1])[1]
         ppm = ppm[ind1:ind2]
         metabo_matrix = metabo_matrix[ind1:ind2, ]
     }
