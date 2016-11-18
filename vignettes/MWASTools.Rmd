@@ -93,18 +93,15 @@ with the function "MWAS_SummarizedExperiment()", and containing the following in
 
 <p style="font-size:110%"> To ensure the stability and reproducibility of the analytical run, we performed QC analysis based on principal component analysis (PCA) and coefficient of variation (CV) (sd/mean) across the QC samples [@dumas2006]. </p>
 
-```{r tidy = TRUE, results='asis'}
+```{r tidy = TRUE, results='asis', fig.width = 14, fig.height = 6}
 # PCA model
 PCA_model = QC_PCA (metabo_SE, scale = FALSE, center = TRUE)
-```
-```{r tidy = TRUE, eval = FALSE}
+
 # Plot PCA scores (PC1 vs PC2 & PC3 vs PC4)
 par(mfrow=c(1,2))
 QC_PCA_scoreplot (PCA_model, metabo_SE, main = "PC1 vs PC2")
 QC_PCA_scoreplot (PCA_model, metabo_SE, px=3, py=4, main="PC3 vs PC4")
 ```
-
- <img src="PCA_scores.png" alt="Smiley face" align="middle" >
  
 <p style="font-size:110%"> In both score plots, the QC samples appear tightly clustered in the center of the Hotelling´s ellipse confirming the absence of batch effects, and ensuring the 
 reproducibility of the analytical run. </p>
@@ -112,16 +109,13 @@ reproducibility of the analytical run. </p>
 <p style="font-size:110%"> Following QC analysis *via* PCA, we calculated the CVs of the NMR signals across the QC samples. Notice that CV = 0.30 and CV = 0.15 are the thresholds established by the FDA (U.S. Food and Drug Administration) for biomarker discovery and quantification, respectively. </p>
 
 
-```{r tidy = TRUE, eval = TRUE}
+```{r tidy = TRUE, eval = TRUE, fig.width = 14, fig.height = 4}
 # CV calculation 
 metabo_CV = QC_CV (metabo_SE, plot_hist = FALSE)
-```
-```{r tidy = TRUE, eval = FALSE}
-# NMR spectrum colored according to CVs
-QC_CV_specNMR(metabo_SE, ref_sample = "QC1")
-```
 
- <img src="CV_spectrum.png" alt="Smiley face" align="middle" >
+# NMR spectrum colored according to CVs
+CV_spectrum = QC_CV_specNMR(metabo_SE, ref_sample = "QC1")
+```
 
 <p style="font-size:110%"> The results from CV analysis show that most metabolic features 
 exhibit low CV values (99 % with CV < 0.30 and 92 % with CV < 0.15), further confirming the reproducibility of the dataset. The metabolic matrix was then CV-filtered to remove 
@@ -131,6 +125,7 @@ non-reproducible features: </p>
 # Filter metabolic-matrix based on a CV cut-off of 0.30
 metabo_SE = CV_filter(metabo_SE, metabo_CV, CV_th = 0.30)
 ```
+<br>
 
 ## Metabolome-wide associations
 
@@ -145,22 +140,18 @@ MWAS_BMI = MWAS_stats(metabo_SE, disease_id = "BMI", confounder_ids = c("Age","G
 <p style="font-size:110%"> *MWAS_BMI* is 3-column matrix, with the metabolic features (ppm values) in the rows. The columns contain the following information: estimates (i.e. r coefficients), raw p-values and BH-corrected p-values (pFDR). These results were visualized using the function "MWAS_skylineNMR( )". </p>
 
 
-```{r tidy = TRUE, eval = FALSE}
+```{r tidy = TRUE, fig.width = 14, fig.height = 6}
 # Visualize MWAS results 
-MWAS_skylineNMR(metabo_SE, MWAS_BMI, ref_sample = "QC1")
+skyline = MWAS_skylineNMR(metabo_SE, MWAS_BMI, ref_sample = "QC1")
 ```
-
- <img src="MWAS_skyline.png" alt="Smiley face" align="middle" >
 <br>
 
 ## NMR metabolite assignment using STOCSY
 <p style="font-size:110%"> Finally, we used STOCSY to assign the unknown NMR signals associated with BMI. An illustrative example using δ 1.04 as driver signal is shown below. </p>
 
-```{r tidy = TRUE, eval = FALSE}
-STOCSY_NMR(metabo_SE, ppm_query = 1.04)
+```{r tidy = TRUE, fig.width = 14, fig.height = 4}
+stocsy = STOCSY_NMR(metabo_SE, ppm_query = 1.04)
 ```
-
- <img src="STOCSY.png" alt="Smiley face" align="middle" >
 
 <p style="font-size:110%"> The STOCSY plot shows the covariance (height) and the correlation (color) of each NMR signal with the driver signal. The most highlighted signals of the plot are two doublets at δ 1.04 and at δ 0.99, indicating that the unknown signal corresponds to valine. <br><br> </p>
 
